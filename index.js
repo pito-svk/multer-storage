@@ -98,18 +98,28 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
       }
     })
 
-    stream.on('error', (err) => {
-      file.cloudStorageError = err
-      return cb(err)
+    var buffers = []
+
+    file.stream.on('data', function (buffer) {
+      buffers.push(buffer)
     })
 
-    stream.on('finish', () => {
-      file.cloudStorageObject = file.originalname
-      file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
-      return cb(null, file)
-    })
+    file.stream.on('end', function () {
+      var buffer = Buffer.concat(buffers)
 
-    stream.end(file.buffer)
+      stream.on('error', (err) => {
+        file.cloudStorageError = err
+        return cb(err)
+      })
+
+      stream.on('finish', () => {
+        file.cloudStorageObject = file.originalname
+        file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
+        return cb(null, file)
+      })
+
+      stream.end(buffer)
+    })
   })
 }
 
