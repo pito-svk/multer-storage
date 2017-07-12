@@ -1,6 +1,12 @@
 # Multer Google Cloud Storage (WIP)
 Multer storage for Google Cloud Storage platform. Heavily inspired by https://github.com/badunk/multer-s3
 
+## Installation
+
+```sh
+npm install --save multer-storage
+```
+
 ## Usage
 ```javascript
 const express = require('express')
