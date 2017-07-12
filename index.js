@@ -25,6 +25,7 @@ function collect (storage, req, file, cb) {
     storage.bucket.bind(storage, req, file),
     storage.acl.bind(storage, req, file),
     storage.projectId.bind(storage, req, file),
+    storage.keyFilename.bind(storage, req, file),
     storage.filepath.bind(storage, req, file)
   ], function (err, values) {
     if (err) return cb(err)
@@ -35,7 +36,8 @@ function collect (storage, req, file, cb) {
       bucket: values[0],
       acl: values[1],
       projectId: values[2],
-      filepath: values[3]
+      keyFilename: values[3],
+      filepath: values[4]
     })
   })
 }
@@ -103,7 +105,7 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     stream.on('finish', () => {
       file.cloudStorageObject = opts.filepath
-      req.file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
+      file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
       return cb()
     })
 
