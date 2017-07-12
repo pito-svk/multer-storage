@@ -45,6 +45,7 @@ function collect (storage, req, file, cb) {
   })
 }
 
+// TODO: allow for metadata
 function GoogleCloudStorage (opts) {
   switch (typeof opts.bucket) {
     case 'function': this.bucket = opts.bucket; break
