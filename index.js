@@ -9,6 +9,7 @@ function staticValue (value) {
 }
 
 var defaultAcl = staticValue('private')
+var defaultContentType = staticValue('application/octet-stream')
 
 function defaultFilepath (req, file, cb) {
   crypto.randomBytes(16, function (err, raw) {
@@ -26,7 +27,8 @@ function collect (storage, req, file, cb) {
     storage.acl.bind(storage, req, file),
     storage.projectId.bind(storage, req, file),
     storage.keyFilename.bind(storage, req, file),
-    storage.filepath.bind(storage, req, file)
+    storage.filepath.bind(storage, req, file),
+    storage.contentType.bind(storage, req, file)
   ], function (err, values) {
     if (err) return cb(err)
 
@@ -37,7 +39,8 @@ function collect (storage, req, file, cb) {
       acl: values[1],
       projectId: values[2],
       keyFilename: values[3],
-      filepath: values[4]
+      filepath: values[4],
+      contentType: values[5]
     })
   })
 }
@@ -75,6 +78,13 @@ function GoogleCloudStorage (opts) {
     case 'undefined': this.filepath = defaultFilepath; break
     default: throw new TypeError('Expected opts.filepath to be undefined, string or function')
   }
+
+  switch (typeof opts.contentType) {
+    case 'function': this.contentType = opts.contentType; break
+    case 'string': this.contentType = staticValue(opts.contentType); break
+    case 'undefined': this.contentType = defaultContentType; break
+    default: throw new TypeError('Expected opts.contentType to be undefined, string or function')
+  }
 }
 
 GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
@@ -90,35 +100,25 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     var bucket = gcs.bucket(opts.bucket)
 
-    var bucketFile = bucket.file(file.originalname)
+    var bucketFile = bucket.file(opts.filepath)
 
-    var stream = bucketFile.createWriteStream({
+    var bucketStream = bucketFile.createWriteStream({
       metadata: {
-        contentType: file.mimetype
+        contentType: opts.contentType
       }
     })
 
-    var buffers = []
+    file.stream.pipe(bucketStream)
 
-    file.stream.on('data', function (buffer) {
-      buffers.push(buffer)
+    bucketStream.on('error', (err) => {
+      file.cloudStorageError = err
+      return cb(err)
     })
 
-    file.stream.on('end', function () {
-      var buffer = Buffer.concat(buffers)
-
-      stream.on('error', (err) => {
-        file.cloudStorageError = err
-        return cb(err)
-      })
-
-      stream.on('finish', () => {
-        file.cloudStorageObject = file.originalname
-        file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
-        return cb(null, file)
-      })
-
-      stream.end(buffer)
+    bucketStream.on('finish', () => {
+      file.cloudStorageObject = file.originalname
+      file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
+      return cb(null, file)
     })
   })
 }
