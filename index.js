@@ -90,9 +90,9 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     var bucket = gcs.bucket(opts.bucket)
 
-    var file = bucket.file(opts.filepath)
+    var bucketFile = bucket.file(file.originalname)
 
-    var stream = file.createWriteStream({
+    var stream = bucketFile.createWriteStream({
       metadata: {
         contentType: file.mimetype
       }
@@ -104,9 +104,9 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
     })
 
     stream.on('finish', () => {
-      file.cloudStorageObject = opts.filepath
+      file.cloudStorageObject = file.originalname
       file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
-      return cb()
+      return cb(null, file)
     })
 
     stream.end(file.buffer)
