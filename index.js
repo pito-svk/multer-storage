@@ -16,12 +16,15 @@ function defaultFilepath (req, file, cb) {
   })
 }
 
+function getPublicUrl (bucket, filename) {
+  return 'https://storage.googleapis.com/' + bucket + '/' + filename
+}
+
 function collect (storage, req, file, cb) {
   parallel([
     storage.bucket.bind(storage, req, file),
     storage.acl.bind(storage, req, file),
     storage.projectId.bind(storage, req, file),
-    storage.keyFilename.bind(storage, req, file),
     storage.filepath.bind(storage, req, file)
   ], function (err, values) {
     if (err) return cb(err)
@@ -32,8 +35,7 @@ function collect (storage, req, file, cb) {
       bucket: values[0],
       acl: values[1],
       projectId: values[2],
-      keyFilename: values[3],
-      filepath: values[4]
+      filepath: values[3]
     })
   })
 }
@@ -86,11 +88,26 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     var bucket = gcs.bucket(opts.bucket)
 
-    bucket.upload(opts.filepath, function (err, file) {
-      if (err) return cb(err)
+    var file = bucket.file(opts.filepath)
 
-      return cb(null, file)
+    var stream = file.createWriteStream({
+      metadata: {
+        contentType: file.mimetype
+      }
     })
+
+    stream.on('error', (err) => {
+      file.cloudStorageError = err
+      return cb(err)
+    })
+
+    stream.on('finish', () => {
+      file.cloudStorageObject = opts.filepath
+      req.file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
+      return cb()
+    })
+
+    stream.end(file.buffer)
   })
 }
 
