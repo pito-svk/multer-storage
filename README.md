@@ -1,4 +1,4 @@
-# Multer Google Cloud Storage
+# Multer Google Cloud Storage (WIP)
 Multer storage for Google Cloud Storage platform. Heavily inspired by https://github.com/badunk/multer-s3
 
 ## Usage
@@ -12,6 +12,7 @@ var app = express()
 const upload = multer({
   storage: MulterGCS({
     projectId: 'google-project-id',
+    keyFilename: '/path/to/keyfile.json',
     bucket: 'some-bucket',
     metadata: (req, file, cb) => {
       return cb(null, { contentType: file.mimetype })
