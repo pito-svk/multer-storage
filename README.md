@@ -7,7 +7,7 @@ const express = require('express')
 const multer = require('multer')
 const MulterGCS = require('multer-storage')
 
-var app = express()
+const app = express()
 
 const upload = multer({
   storage: MulterGCS({
