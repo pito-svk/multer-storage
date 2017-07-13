@@ -81,8 +81,8 @@ function GoogleCloudStorage (opts) {
   }
 
   switch (typeof opts.metadata) {
-    case 'function': this.getMetadata = opts.metadata; break
-    case 'undefined': this.getMetadata = defaultMetadata; break
+    case 'function': this.metadata = opts.metadata; break
+    case 'undefined': this.metadata = defaultMetadata; break
     default: throw new TypeError('Expected opts.metadata to be undefined or function')
   }
 }
