@@ -9,7 +9,7 @@ function staticValue (value) {
 }
 
 var defaultAcl = staticValue('private')
-var defaultContentType = staticValue('application/octet-stream')
+var defaultMetadata = staticValue(null)
 
 function defaultFilepath (req, file, cb) {
   crypto.randomBytes(16, function (err, raw) {
@@ -28,7 +28,7 @@ function collect (storage, req, file, cb) {
     storage.projectId.bind(storage, req, file),
     storage.keyFilename.bind(storage, req, file),
     storage.filepath.bind(storage, req, file),
-    storage.contentType.bind(storage, req, file)
+    storage.metadata.bind(storage, req, file)
   ], function (err, values) {
     if (err) return cb(err)
 
@@ -40,7 +40,7 @@ function collect (storage, req, file, cb) {
       projectId: values[2],
       keyFilename: values[3],
       filepath: values[4],
-      contentType: values[5]
+      metadata: values[5]
     })
   })
 }
@@ -80,11 +80,10 @@ function GoogleCloudStorage (opts) {
     default: throw new TypeError('Expected opts.filepath to be undefined, string or function')
   }
 
-  switch (typeof opts.contentType) {
-    case 'function': this.contentType = opts.contentType; break
-    case 'string': this.contentType = staticValue(opts.contentType); break
-    case 'undefined': this.contentType = defaultContentType; break
-    default: throw new TypeError('Expected opts.contentType to be undefined, string or function')
+  switch (typeof opts.metadata) {
+    case 'function': this.getMetadata = opts.metadata; break
+    case 'undefined': this.getMetadata = defaultMetadata; break
+    default: throw new TypeError('Expected opts.metadata to be undefined or function')
   }
 }
 
@@ -103,11 +102,7 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     var bucketFile = bucket.file(opts.filepath)
 
-    var bucketStream = bucketFile.createWriteStream({
-      metadata: {
-        contentType: opts.contentType
-      }
-    })
+    var bucketStream = bucketFile.createWriteStream({ metadata: opts.metadata })
 
     file.stream.pipe(bucketStream)
 
