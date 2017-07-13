@@ -113,7 +113,7 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
 
     bucketStream.on('finish', () => {
       file.cloudStorageObject = file.originalname
-      file.cloudStoragePublicUrl = getPublicUrl(opts.bucket, opts.filepath)
+      file.url = getPublicUrl(opts.bucket, opts.filepath)
       return cb(null, file)
     })
   })
