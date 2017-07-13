@@ -25,7 +25,8 @@ const upload = multer({
     },
     filepath: (req, file, cb) => {
       cb(null, 'myfile.png')
-    }
+    },
+    acl: 'public-read'
   })
 })
 
