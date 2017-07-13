@@ -3,6 +3,7 @@
   "version": "0.2.1",
   "description": "Multer storage engine for Google Cloud Storage",
   "dependencies": {
-    "@google-cloud/storage": "^1.2.0"
+    "@google-cloud/storage": "^1.2.0",
+    "run-parallel": "^1.1.6"
   }
 }
