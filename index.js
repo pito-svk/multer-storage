@@ -119,8 +119,23 @@ GoogleCloudStorage.prototype._handleFile = function (req, file, cb) {
   })
 }
 
-// TODO: implement
 GoogleCloudStorage.prototype._removeFile = function (req, file, cb) {
+  collect(this, req, file, function (err, opts) {
+    if (err) return cb(err)
+
+    var params = {
+      projectId: opts.projectId,
+      keyFilename: opts.keyFilename
+    }
+
+    var gcs = storage(params)
+
+    var bucket = gcs.bucket(opts.bucket)
+
+    var bucketFile = bucket.file(opts.filepath)
+
+    bucketFile.delete(cb)
+  })
 }
 
 module.exports = function (opts) {
